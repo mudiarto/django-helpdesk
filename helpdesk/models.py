@@ -573,12 +573,17 @@ def attachment_path(instance, filename):
     """
     import os
     from django.conf import settings
-    os.umask(0)
-    path = 'helpdesk/attachments/%s/%s' % (instance.followup.ticket.ticket_for_url, instance.followup.id )
-    att_path = os.path.join(settings.MEDIA_ROOT, path)
-    if not os.path.exists(att_path):
-        os.makedirs(att_path, 0777)
-    return os.path.join(path, filename)
+
+    if settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto.S3BotoStorage':
+        # support for amazon S3 via boto
+        return 'helpdesk/attachments/%s/%s/%s' % (instance.followup.ticket.ticket_for_url, instance.followup.id, filename )
+    else:
+        os.umask(0)
+        path = 'helpdesk/attachments/%s/%s' % (instance.followup.ticket.ticket_for_url, instance.followup.id )
+        att_path = os.path.join(settings.MEDIA_ROOT, path)
+        if not os.path.exists(att_path):
+            os.makedirs(att_path, 0777)
+        return os.path.join(path, filename)
 
 
 class Attachment(models.Model):
